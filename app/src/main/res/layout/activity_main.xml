@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main_activity_root_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/app_background"
@@ -55,7 +56,6 @@
             android:imeOptions="actionNext"
             android:inputType="textPostalAddress|textCapSentences"
             android:maxLines="1"
-            android:text="@string/hint_from_location"
             android:textColor="@color/text_primary_dark_bg"
             android:textColorHint="@color/text_secondary_dark_bg"
             android:textSize="@dimen/text_size_body" />
@@ -94,7 +94,6 @@
             android:imeOptions="actionDone"
             android:inputType="textPostalAddress|textCapSentences"
             android:maxLines="1"
-            android:text="@string/hint_to_destination"
             android:textColor="@color/text_primary_dark_bg"
             android:textColorHint="@color/text_secondary_dark_bg"
             android:textSize="@dimen/text_size_body" />
@@ -222,6 +221,7 @@
         android:layout_marginTop="@dimen/spacing_medium"
         android:background="@color/available_routes_background"
         android:fillViewport="true"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -245,12 +245,14 @@
                 android:textSize="@dimen/text_size_title"
                 android:textStyle="bold" />
 
-            <include
-                android:id="@+id/includeStaticRouteItem"
-                layout="@layout/item_route"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recyclerViewRoutes"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_medium" />
+                android:layout_marginTop="@dimen/spacing_medium"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:itemCount="3"
+                tools:listitem="@layout/item_route" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
