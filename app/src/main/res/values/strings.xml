@@ -1,0 +1,28 @@
+<resources>
+    <string name="app_name">TripPlannerApp</string>
+
+    <string name="title_plan_your_journey">Plan Your Journey</string>
+    <string name="hint_from_location">From: Current location (Tap to change)</string>
+    <string name="hint_to_destination">To: Enter destination</string>
+
+    <string name="button_today">Today</string>
+    <string name="button_now">Now</string>
+
+    <string name="button_find_routes">Find Routes</string>
+    <string name="content_description_favourite_routes">Favourite routes</string>
+    <string name="content_description_saved_trips">Saved trips</string>
+
+    <string name="title_available_routes">Available Routes</string>
+    <string name="example_route_name">Route 1</string>
+    <string name="example_duration">In 19 min</string>
+    <string name="label_departure">Departure</string>
+    <string name="example_departure_time">9:11 am</string>
+    <string name="label_arrival">Arrival</string>
+    <string name="example_arrival_time">9:30 am</string>
+    <string name="label_transfers">Transfers</string>
+    <string name="example_transfers_value">1</string>
+    <string name="example_transport_mode_1">Bus 575</string>
+    <string name="example_transport_mode_2">Train T1</string>
+    <string name="link_view_details">View Details</string>
+    <string name="example_status">On time</string>
+</resources>

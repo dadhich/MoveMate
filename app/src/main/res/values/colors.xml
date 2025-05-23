@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="app_background">#FF1A1A2E</color>
+    <color name="text_primary_dark_bg">#FFFFFFFF</color>
+    <color name="text_secondary_dark_bg">#FFA9A9A9</color>
+    <color name="input_field_background">#FF3D3D5C</color>
+    <color name="dot_from_green">#FF00E676</color>
+    <color name="dot_to_red">#FFFF1744</color>
+    <color name="button_primary_blue">#FF007AFF</color>
+    <color name="icon_tint_light">#FFFFFFFF</color>
+    <color name="card_route_dark_background_original">#FF2C2C44</color>
+    <color name="text_route_duration_dark_bg">#FFFFFFFF</color>
+    <color name="text_route_details_link_dark_bg">#FF82B1FF</color>
+    <color name="available_routes_background">#FFF0F2F5</color>
+    <color name="card_route_light_background">#FFFFFFFF</color>
+    <color name="text_primary_on_light">#DE000000</color>
+    <color name="text_secondary_on_light">#8A000000</color>
+    <color name="icon_tint_on_light">#61000000</color>
+    <color name="transport_tag_light_background">#FFE8EAF6</color>
+    <color name="status_on_time">#FF4CAF50</color>
+    <color name="status_delayed">#FFF44336</color>
+    <color name="status_early">#FF2196F3</color>
+    <color name="view_details_link_on_light">#FF007AFF</color>
+</resources>
