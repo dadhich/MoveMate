@@ -4,6 +4,12 @@
 
 Move Mate is an Android application designed to help users plan their journeys using public transport in Sydney, NSW, Australia. The app integrates with the Transport for NSW (TfNSW) Open Data APIs to provide trip suggestions, real-time departure information, and location-based services. Key features include planning trips with custom or current locations, date/time selection for departures or arrivals, autocomplete for addresses and stops, and the ability to save favourite trips.
 
+## Screen shots
+
+![11](https://github.com/user-attachments/assets/464906f1-2b9b-4f31-a55d-ecbabfad681f)
+![12](https://github.com/user-attachments/assets/b2feae16-2457-4780-9ca3-f22f10dedbf1)
+
+
 ## Features Implemented
 
 * **Trip Planning:**
