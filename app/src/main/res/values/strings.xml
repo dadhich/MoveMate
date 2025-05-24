@@ -1,8 +1,8 @@
 <resources>
-    <string name="app_name">TripPlannerApp</string>
+    <string name="app_name">Move Mate</string>
 
     <string name="title_plan_your_journey">Plan Your Journey</string>
-    <string name="hint_from_location">From: Current location (Tap to change)</string>
+    <string name="hint_from_location">From: Using current location (Tap to change)</string>
     <string name="hint_to_destination">To: Enter destination</string>
 
     <string name="button_today">Today</string>

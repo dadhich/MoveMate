@@ -23,7 +23,7 @@ interface TfNSWApiService {
         @Query("name_origin") nameOrigin: String,
         @Query("type_destination") typeDestination: String,
         @Query("name_destination") nameDestination: String,
-        @Query("calcNumberOfTrips") calcNumberOfTrips: Int = 3,
+        @Query("calcNumberOfTrips") calcNumberOfTrips: Int = 8,
         @Query("TfNSWTR") tfNSWTR: String = "true",
         @Query("version") version: String = "10.2.1.42" // As per Swagger
     ): Response<TripResponse>

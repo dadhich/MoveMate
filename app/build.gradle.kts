@@ -82,9 +82,12 @@ dependencies {
     implementation(libs.logging.interceptor)
 
     // Kotlin Coroutines for asynchronous operations
-    implementation(libs.kotlinx.coroutines.core) // Or latest stable
-    implementation(libs.jetbrains.kotlinx.coroutines.android) // Or latest stable
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.jetbrains.kotlinx.coroutines.android)
 
     // Lifecycle KTX for lifecycleScope (to launch coroutines in Activity)
-    implementation(libs.androidx.lifecycle.runtime.ktx) // Or latest stable
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+
+    // Location
+    implementation(libs.play.services.location)
 }
