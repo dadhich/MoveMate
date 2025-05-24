@@ -26,4 +26,8 @@
     <string name="link_view_details">View Details</string>
     <string name="example_status">On time</string>
     <string name="trip_details">Trip Details</string>
+    <string name="total_time">Total Time</string>
+    <string name="departure">Departure</string>
+    <string name="arrival">Arrival</string>
+    <string name="journey_legs">Journey Legs</string>
 </resources>

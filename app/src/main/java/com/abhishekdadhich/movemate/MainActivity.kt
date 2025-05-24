@@ -40,6 +40,11 @@ import java.util.Locale
 import java.util.TimeZone
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import android.content.SharedPreferences
+import android.view.LayoutInflater
+import android.widget.EditText
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.DividerItemDecoration
 
 class MainActivity : AppCompatActivity() {
 
@@ -72,7 +77,6 @@ class MainActivity : AppCompatActivity() {
     private var isProgrammaticTextChangeTo = false
     private var isProcessingToClick = false
 
-    private var isUsingDeviceLocationForOrigin = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var currentLatitude: Double? = null
     private var currentLongitude: Double? = null
@@ -85,19 +89,19 @@ class MainActivity : AppCompatActivity() {
     }
     private val displayTimeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
-    // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING
     private var lastFetchedApiJourneys: List<Journey> = emptyList()
-    // END: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+
+    // SharedPreferences for storing favorites
+    private lateinit var sharedPreferences: SharedPreferences
+    private val gson = Gson()
 
     private val requestLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
                 Log.d("TripPlannerApp", "Location permission granted by user.")
                 fetchCurrentLocationAndUpdateState()
-                isUsingDeviceLocationForOrigin = true
             } else {
                 Log.d("TripPlannerApp", "Location permission denied by user.")
-                isUsingDeviceLocationForOrigin = false
                 Toast.makeText(
                     this,
                     "Location permission denied. Please enter origin.",
@@ -110,8 +114,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Initialize SharedPreferences
+        sharedPreferences = getSharedPreferences("MoveMatePrefs", MODE_PRIVATE)
+
         getUIControls()
-        initialiseRouteControls() // This function will be modified below
+        initialiseRouteControls()
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         checkAndRequestLocationPermission()
@@ -168,26 +175,195 @@ class MainActivity : AppCompatActivity() {
         // set the date button -- default to today
         val buttonToday = findViewById<MaterialButton>(R.id.buttonToday)
         buttonToday.setOnClickListener { showDatePicker(buttonToday) }
-        val initialCalendar = Calendar.getInstance(); selectedYear =
-            initialCalendar.get(Calendar.YEAR)
-        selectedMonth = initialCalendar.get(Calendar.MONTH); selectedDayOfMonth =
-            initialCalendar.get(Calendar.DAY_OF_MONTH)
+        val initialCalendar = Calendar.getInstance()
+        selectedYear = initialCalendar.get(Calendar.YEAR)
+        selectedMonth = initialCalendar.get(Calendar.MONTH)
+        selectedDayOfMonth = initialCalendar.get(Calendar.DAY_OF_MONTH)
 
         // set the time button -- default to now
         val buttonNow = findViewById<MaterialButton>(R.id.buttonNow)
         buttonNow.setOnClickListener { showTimePicker(buttonNow) }
-        selectedHour = initialCalendar.get(Calendar.HOUR_OF_DAY); selectedMinute =
-            initialCalendar.get(Calendar.MINUTE)
+        selectedHour = initialCalendar.get(Calendar.HOUR_OF_DAY)
+        selectedMinute = initialCalendar.get(Calendar.MINUTE)
 
         // set the find routes button
         buttonFindRoutes.setOnClickListener {
-            // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING (Keyboard hide moved here from your file)
             hideKeyboard()
-            // END: CHANGING FOR ROUTE OPTIONS CARD CLICKING
             lifecycleScope.launch {
                 handleFindRoutesClick()
             }
         }
+
+        // New buttons for favorites
+        val buttonSavedTrips = findViewById<MaterialButton>(R.id.buttonSavedTrips)
+        buttonSavedTrips.setOnClickListener { showSaveFavoriteDialog() }
+
+        val buttonFavorite = findViewById<MaterialButton>(R.id.buttonFavorite)
+        buttonFavorite.setOnClickListener { showManageFavoritesDialog() }
+    }
+
+    private fun showSaveFavoriteDialog() {
+
+        val originName = autoCompleteTextViewFrom.text.toString().trim()
+        val destinationName = autoCompleteTextViewTo.text.toString().trim()
+
+        Log.d("MoveMate", "Origin from textbox: $originName")
+        Log.d("MoveMate", "Destination from textbox: $destinationName")
+        Log.d("MoveMate", "selectedOriginStopId: $selectedOriginStopId")
+        Log.d("MoveMate", "Current Lat: $currentLatitude")
+        Log.d("MoveMate", "Current Long: $currentLongitude")
+
+        // check if origin is selected or location is set
+        if(selectedOriginStopId == null && (currentLatitude == null || currentLongitude == null)) {
+            Toast.makeText(this, "Please select starting point or enable location", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Check if destination is selected
+        if (destinationName.isEmpty()) {
+            Toast.makeText(this, "Please select a destination first.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // Create dialog
+        val dialogView = LayoutInflater.from(this).inflate(
+            R.layout.dialog_save_favorite,
+            null
+        )
+        val editTextFavoriteName = dialogView.findViewById<EditText>(R.id.editTextFavoriteName)
+        val buttonAdd = dialogView.findViewById<MaterialButton>(R.id.buttonAddFavorite)
+        val buttonCancel = dialogView.findViewById<MaterialButton>(R.id.buttonCancel)
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Save Favorite Trip")
+            .setView(dialogView)
+            .create()
+
+        buttonAdd.setOnClickListener {
+            val favoriteName = editTextFavoriteName.text.toString().trim()
+            if (favoriteName.isEmpty()) {
+                editTextFavoriteName.error = "Please enter a name"
+                return@setOnClickListener
+            }
+
+            val favoriteTrip = FavoriteTrip(
+                id = UUID.randomUUID().toString(),
+                name = favoriteName,
+                originName = originName,
+                originStopId = selectedOriginStopId,
+                originLatitude = currentLatitude,
+                originLongitude =currentLongitude,
+                destinationName = destinationName,
+                destinationStopId = selectedDestinationStopId!!
+            )
+
+            saveFavoriteTrip(favoriteTrip)
+            Toast.makeText(this, "Favorite '$favoriteName' saved!", Toast.LENGTH_SHORT).show()
+            dialog.dismiss()
+        }
+
+        buttonCancel.setOnClickListener { dialog.dismiss() }
+
+        dialog.show()
+    }
+
+    private fun showManageFavoritesDialog() {
+        val favorites = getFavoriteTrips()
+        if (favorites.isEmpty()) {
+            Toast.makeText(this, "No favorite trips saved.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val dialogView = LayoutInflater.from(this).inflate(
+            R.layout.dialog_manage_favorites,
+            null
+        )
+        val recyclerViewFavorites = dialogView.findViewById<RecyclerView>(R.id.recyclerViewFavorites)
+        recyclerViewFavorites.layoutManager = LinearLayoutManager(this)
+        recyclerViewFavorites.addItemDecoration(DividerItemDecoration(this, DividerItemDecoration.VERTICAL))
+
+        // Define the dialog early
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Manage Favorite Trips")
+            .setView(dialogView)
+            .setNegativeButton("Close", null)
+            .create()
+
+        // Define adapter with click listeners
+        val adapter = FavoriteTripAdapter(
+            favorites,
+            onItemClick = { favorite ->
+                applyFavoriteTrip(favorite)
+                Toast.makeText(this, "Applied favorite: ${favorite.name}", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            },
+            onDeleteClick = { favorite ->
+                deleteFavoriteTrip(favorite)
+                // Update the adapter with new data instead of creating a new adapter
+                val updatedFavorites = getFavoriteTrips()
+                recyclerViewFavorites.adapter = FavoriteTripAdapter(
+                    updatedFavorites,
+                    onItemClick = { newFavorite ->
+                        applyFavoriteTrip(newFavorite)
+                        Toast.makeText(this, "Applied favorite: ${newFavorite.name}", Toast.LENGTH_SHORT).show()
+                        dialog.dismiss()
+                    },
+                    onDeleteClick = { newFavorite ->
+                        deleteFavoriteTrip(newFavorite)
+                        // Recursively update the adapter with new data
+                        (recyclerViewFavorites.adapter as? FavoriteTripAdapter)?.updateFavorites(getFavoriteTrips())
+                        Toast.makeText(this, "Deleted favorite: ${newFavorite.name}", Toast.LENGTH_SHORT).show()
+                    }
+                )
+                Toast.makeText(this, "Deleted favorite: ${favorite.name}", Toast.LENGTH_SHORT).show()
+            }
+        )
+        recyclerViewFavorites.adapter = adapter
+
+        dialog.show()
+    }
+
+    private fun saveFavoriteTrip(favoriteTrip: FavoriteTrip) {
+        val favorites = getFavoriteTrips().toMutableList()
+        favorites.add(favoriteTrip)
+        val editor = sharedPreferences.edit()
+        editor.putString("favorite_trips", gson.toJson(favorites))
+        editor.apply()
+    }
+
+    private fun getFavoriteTrips(): List<FavoriteTrip> {
+        val json = sharedPreferences.getString("favorite_trips", null) ?: return emptyList()
+        return gson.fromJson(json, Array<FavoriteTrip>::class.java).toList()
+    }
+
+    private fun deleteFavoriteTrip(favoriteTrip: FavoriteTrip) {
+        val favorites = getFavoriteTrips().toMutableList()
+        favorites.removeAll { it.id == favoriteTrip.id }
+        val editor = sharedPreferences.edit()
+        editor.putString("favorite_trips", gson.toJson(favorites))
+        editor.apply()
+    }
+
+    private fun applyFavoriteTrip(favorite: FavoriteTrip) {
+        // Set origin
+        if(favorite.originStopId == null) {
+            currentLatitude = favorite.originLatitude
+            currentLongitude = favorite.originLongitude
+            selectedOriginStopId = null
+        } else {
+            selectedOriginStopId = favorite.originStopId
+        }
+
+        // set origin text box
+        isProgrammaticTextChangeFrom = true
+        autoCompleteTextViewFrom.setText(favorite.originName, false)
+
+        // Set destination text box
+        selectedDestinationStopId = favorite.destinationStopId
+        isProgrammaticTextChangeTo = true
+        autoCompleteTextViewTo.setText(favorite.destinationName, false)
+
+        resetProcessingFlags()
     }
 
     private fun hideKeyboard() {
@@ -198,10 +374,6 @@ class MainActivity : AppCompatActivity() {
             view = View(this)
         }
         imm.hideSoftInputFromWindow(view.windowToken, 0)
-        // Optionally clear focus from the text fields too
-        autoCompleteTextViewFrom.clearFocus()
-        autoCompleteTextViewTo.clearFocus()
-        findViewById<View>(R.id.main_activity_root_layout)?.requestFocus() // Request focus on root
     }
 
 
@@ -219,7 +391,6 @@ class MainActivity : AppCompatActivity() {
     private fun fetchCurrentLocationAndUpdateState() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d("TripPlannerApp", "No permission to fetch current location. Trying last known (which also needs permission).")
-            isUsingDeviceLocationForOrigin = false
             fetchLastKnownLocationFallback()
             return
         }
@@ -228,10 +399,7 @@ class MainActivity : AppCompatActivity() {
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
                     currentLatitude = location.latitude; currentLongitude = location.longitude
-                    isUsingDeviceLocationForOrigin = true
-
-                    // TODO: AD: Check this
-                    //  selectedOriginStopId = null
+                    selectedOriginStopId = null
 
                     Log.i("TripPlannerApp", "Got location: Lat: $currentLatitude, Lon: $currentLongitude")
                 } else {
@@ -251,20 +419,14 @@ class MainActivity : AppCompatActivity() {
             .addOnSuccessListener { location: Location? ->
                 if (location != null) {
                     currentLatitude = location.latitude; currentLongitude = location.longitude
-                    isUsingDeviceLocationForOrigin = true
-
-                    // TODO: AD - check this
-                    // selectedOriginStopId = null
-
+                    selectedOriginStopId = null
                     Log.i("TripPlannerApp", "Last known location obtained: Lat: $currentLatitude, Lon: $currentLongitude")
                 } else {
                     Log.w("TripPlannerApp", "Last known location also null.")
-                    isUsingDeviceLocationForOrigin = false
                     Toast.makeText(this, "Could not get current location. Please enter origin.", Toast.LENGTH_SHORT).show()
                 }
             }
             .addOnFailureListener { e ->
-                isUsingDeviceLocationForOrigin = false
                 Log.e("TripPlannerApp", "Error fetching last known location.", e)
                 Toast.makeText(this, "Error fetching location. Please enter origin.", Toast.LENGTH_SHORT).show()
             }
@@ -280,7 +442,7 @@ class MainActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 if (isProgrammaticTextChangeFrom || isProcessingFromClick)
                     return
-                selectedOriginStopId = null
+                //selectedOriginStopId = null
                 searchRunnableFrom?.let { debounceHandlerFrom.removeCallbacks(it) }
             }
 
@@ -307,6 +469,7 @@ class MainActivity : AppCompatActivity() {
 
             if (actualSelectedLocation != null) {
                 selectedOriginStopId = actualSelectedLocation.id
+                currentLatitude = null; currentLongitude = null
                 isProgrammaticTextChangeFrom = true
                 autoCompleteTextViewFrom.setText(
                     actualSelectedLocation.name ?: actualSelectedLocation.disassembledName ?: "", false
@@ -318,7 +481,7 @@ class MainActivity : AppCompatActivity() {
                 Log.e("TripPlannerApp", "From: Could not find selected object for string: $selectedString")
                 selectedOriginStopId = null // Ensure ID is null
             }
-            buttonFindRoutes.requestFocus() // Explicitly move focus to "Find Routes" button
+            hideKeyboard()
             resetProcessingFlags()
         }
     }
@@ -351,6 +514,9 @@ class MainActivity : AppCompatActivity() {
         autoCompleteTextViewTo.setOnItemClickListener { parent, _, position, _ ->
             isProcessingToClick = true
             val selectedString = toSuggestionsAdapter.getItem(position)
+
+            Log.d("TripPlannerApp", "Destination selected string: $selectedString")
+
             val actualSelectedLocation = currentToSuggestions.find {
                 val displayName = it.name ?: it.disassembledName ?: ""
                 displayName == selectedString
@@ -369,7 +535,7 @@ class MainActivity : AppCompatActivity() {
                 Log.e("TripPlannerApp", "To: Could not find selected object for string: $selectedString")
                 selectedDestinationStopId = null
             }
-            buttonFindRoutes.requestFocus() // Explicitly move focus to "Find Routes" button
+            hideKeyboard()
             resetProcessingFlags()
         }
     }
@@ -454,7 +620,7 @@ class MainActivity : AppCompatActivity() {
             }
             else {
                 // user has typed something, but there is no corresponding stop id for it, thus it is invalid location, so can't proceed with API call
-                Log.i("TripPlannerApp", "User has typed ${autoCompleteTextViewFrom.text} in 'To', but the stop-id is null, so can't proceed with API call to find routes")
+                Log.i("TripPlannerApp", "User has typed ${autoCompleteTextViewFrom.text} in 'From', but the stop-id is null, so can't proceed with API call to find routes")
                 Toast.makeText(this, "Please select a valid starting point from suggestions.",  Toast.LENGTH_LONG).show()
                 autoCompleteTextViewFrom.requestFocus()
                 return // Stop API call
@@ -560,11 +726,6 @@ class MainActivity : AppCompatActivity() {
                 .show()
         }
 
-        resetAllFlags()
-    }
-
-    private fun resetAllFlags() {
-        selectedOriginStopId = null
         resetProcessingFlags()
     }
 
