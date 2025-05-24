@@ -11,15 +11,15 @@ import androidx.recyclerview.widget.RecyclerView
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 
-class RouteAdapter(private var routes: List<Route>) :
-    RecyclerView.Adapter<RouteAdapter.RouteViewHolder>() {
+class RouteAdapter(
+    private var routes: List<Route>,
+    private val onItemClicked: (position: Int) -> Unit // Click listener lambda
+) : RecyclerView.Adapter<RouteAdapter.RouteViewHolder>() {
 
     class RouteViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // val statusDot: ImageView = itemView.findViewById(R.id.imageViewStatusDot) // Removed
         val routeName: TextView = itemView.findViewById(R.id.textViewRouteName)
         val durationAndStatusText: TextView = itemView.findViewById(R.id.textViewRouteDuration)
         val oldStatusText: TextView = itemView.findViewById(R.id.textViewStatus) // Should be GONE
-
         val departureTime: TextView = itemView.findViewById(R.id.textViewDepartureTime)
         val arrivalTime: TextView = itemView.findViewById(R.id.textViewArrivalTime)
         val transfersValue: TextView = itemView.findViewById(R.id.textViewTransfersValue)
@@ -29,7 +29,14 @@ class RouteAdapter(private var routes: List<Route>) :
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RouteViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_route, parent, false)
-        return RouteViewHolder(view)
+        val viewHolder = RouteViewHolder(view)
+        viewHolder.itemView.setOnClickListener {
+            val position = viewHolder.adapterPosition
+            if (position != RecyclerView.NO_POSITION) {
+                onItemClicked(position)
+            }
+        }
+        return viewHolder
     }
 
     override fun onBindViewHolder(holder: RouteViewHolder, position: Int) {
@@ -41,7 +48,7 @@ class RouteAdapter(private var routes: List<Route>) :
 
         var timeToFirstVehicleDepartureString = "N/A"
         var firstVehicleStatusMessage = "scheduled"
-        // var firstVehicleStatusType = RouteStatusType.ON_TIME // Not strictly needed if dot is gone, color is prime
+        // var firstVehicleStatusType = RouteStatusType.ON_TIME // Dot removed
         var statusTextColor = ContextCompat.getColor(context, R.color.status_on_time)
 
         val currentTimeMillis = Calendar.getInstance().timeInMillis
@@ -63,39 +70,31 @@ class RouteAdapter(private var routes: List<Route>) :
         val scheduledDep = route.firstVehicleScheduledDepartureUTC
 
         if (estimatedDep != null && scheduledDep != null) {
-            val diffMillis = scheduledDep - estimatedDep
-            val diffMinutes = TimeUnit.MILLISECONDS.toMinutes(diffMillis)
+            val diffScheduledVsEstimatedMillis = scheduledDep - estimatedDep
+            val diffMinutes = TimeUnit.MILLISECONDS.toMinutes(diffScheduledVsEstimatedMillis)
             val thresholdMinutes = 1
 
             if (estimatedDep == scheduledDep) {
                 firstVehicleStatusMessage = "scheduled"
-                // firstVehicleStatusType = RouteStatusType.ON_TIME (dot removed)
                 statusTextColor = ContextCompat.getColor(context, R.color.status_on_time)
             } else if (diffMinutes > thresholdMinutes) {
                 firstVehicleStatusMessage = "${diffMinutes}m early"
-                // firstVehicleStatusType = RouteStatusType.EARLY (dot removed)
                 statusTextColor = ContextCompat.getColor(context, R.color.status_early)
             } else if (diffMinutes < -thresholdMinutes) {
                 firstVehicleStatusMessage = "${-diffMinutes}m delayed"
-                // firstVehicleStatusType = RouteStatusType.DELAYED (dot removed)
                 statusTextColor = ContextCompat.getColor(context, R.color.status_delayed)
             } else {
                 firstVehicleStatusMessage = "on time"
-                // firstVehicleStatusType = RouteStatusType.ON_TIME (dot removed)
                 statusTextColor = ContextCompat.getColor(context, R.color.status_on_time)
             }
         } else if (route.firstVehicleActualDepartureUTC != null) {
             firstVehicleStatusMessage = "scheduled"
-            // firstVehicleStatusType = RouteStatusType.ON_TIME (dot removed)
             statusTextColor = ContextCompat.getColor(context, R.color.status_on_time)
         }
 
         holder.durationAndStatusText.text =
             "$timeToFirstVehicleDepartureString - $firstVehicleStatusMessage".trimEnd { it == ' ' || it == '-' }
         holder.durationAndStatusText.setTextColor(statusTextColor)
-
-        // Removed statusDot image resource setting as the ImageView is removed
-        // when (firstVehicleStatusType) { ... }
 
         holder.departureTime.text = route.overallJourneyDepartureTimeForDisplay
         holder.arrivalTime.text = route.overallJourneyETAForDisplay

@@ -25,4 +25,5 @@
     <string name="example_transport_mode_2">Train T1</string>
     <string name="link_view_details">View Details</string>
     <string name="example_status">On time</string>
+    <string name="trip_details">Trip Details</string>
 </resources>

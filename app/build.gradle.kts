@@ -88,6 +88,9 @@ dependencies {
     // Lifecycle KTX for lifecycleScope (to launch coroutines in Activity)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Location
+    // For Location Services
     implementation(libs.play.services.location)
+
+    // Gson for JSON serialization/deserialization (if not already pulled by Retrofit converter)
+    implementation(libs.gson)
 }

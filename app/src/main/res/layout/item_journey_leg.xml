@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/spacing_small"
+    android:layout_marginBottom="@dimen/spacing_medium"
+    app:cardBackgroundColor="@color/card_route_light_background"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp"
+    app:strokeWidth="0dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="@dimen/spacing_medium"
+        android:paddingTop="@dimen/spacing_medium"
+        android:paddingEnd="@dimen/spacing_medium"
+        android:paddingBottom="@dimen/spacing_medium">
+
+        <ImageView
+            android:id="@+id/legIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="2dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/icon_tint_on_light"
+            tools:srcCompat="@drawable/ic_walk_24dp" />
+
+        <TextView
+            android:id="@+id/legModeName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="@id/legIcon"
+            app:layout_constraintEnd_toStartOf="@id/legDurationChip"
+            app:layout_constraintStart_toEndOf="@id/legIcon"
+            app:layout_constraintTop_toTopOf="@id/legIcon"
+            tools:text="Metro M1 Metro North West &amp; Bankstown Line very long" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/legDurationChip"
+            style="@style/Widget.MaterialComponents.Chip.Action"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minHeight="28dp"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:chipBackgroundColor="@color/transport_tag_light_background"
+            app:ensureMinTouchTargetSize="false"
+            app:layout_constraintBottom_toBottomOf="@id/legIcon"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/legIcon"
+            tools:text="12 min" />
+
+        <TextView
+            android:id="@+id/labelFrom"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_medium"
+            android:text="From"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/legIcon" />
+
+        <TextView
+            android:id="@+id/textFromLocation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            app:layout_constraintEnd_toStartOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/labelFrom"
+            tools:text="Epping Station, Platform 6 very long name for testing" />
+
+        <TextView
+            android:id="@+id/labelDeparture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:text="Departure"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textFromLocation" />
+
+        <TextView
+            android:id="@+id/textDepartureTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            app:layout_constraintEnd_toStartOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/labelDeparture"
+            tools:text="1:58 pm" />
+
+        <TextView
+            android:id="@+id/labelStops"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:text="Stops"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textDepartureTime" />
+
+        <TextView
+            android:id="@+id/textStopsValue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing_small"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            app:layout_constraintEnd_toStartOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/labelStops"
+            tools:text="3" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guidelineVerticalMidLeg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_percent="0.5" />
+
+        <TextView
+            android:id="@+id/labelTo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:text="To"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toEndOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintTop_toTopOf="@id/labelFrom" />
+
+        <TextView
+            android:id="@+id/textToLocation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintTop_toBottomOf="@id/labelTo"
+            tools:text="Norwest Station, Platform long name for test" />
+
+        <TextView
+            android:id="@+id/labelArrival"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:text="Arrival"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toEndOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintTop_toBottomOf="@id/textToLocation" />
+
+        <TextView
+            android:id="@+id/textArrivalTime"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintTop_toBottomOf="@id/labelArrival"
+            tools:text="2:11 pm" />
+
+        <TextView
+            android:id="@+id/labelStandPlatform"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintStart_toEndOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintTop_toBottomOf="@id/textArrivalTime"
+            tools:text="Platform" />
+
+        <TextView
+            android:id="@+id/textStandPlatformValue"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing_small"
+            android:textColor="@color/text_primary_on_light"
+            android:textSize="@dimen/text_size_body"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/guidelineVerticalMidLeg"
+            app:layout_constraintTop_toBottomOf="@id/labelStandPlatform"
+            tools:text="6" />
+
+        <TextView
+            android:id="@+id/textInstruction"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_large"
+            android:textColor="@color/text_secondary_on_light"
+            android:textSize="@dimen/text_size_caption"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/textStopsValue"
+            tools:text="Exit and proceed to exit" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</com.google.android.material.card.MaterialCardView>

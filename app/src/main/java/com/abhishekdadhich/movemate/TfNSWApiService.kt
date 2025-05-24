@@ -23,19 +23,19 @@ interface TfNSWApiService {
         @Query("name_origin") nameOrigin: String,
         @Query("type_destination") typeDestination: String,
         @Query("name_destination") nameDestination: String,
-        @Query("calcNumberOfTrips") calcNumberOfTrips: Int = 8,
-        @Query("TfNSWTR") tfNSWTR: String = "true",
-        @Query("version") version: String = "10.2.1.42" // As per Swagger
+        @Query("calcNumberOfTrips") calcNumberOfTrips: Int = 3, // Defaulted to 3 in previous version
+        @Query("TfNSWTR") tfNSWTR: String = "true", // Ensure this parameter is present
+        @Query("version") version: String = "10.2.1.42"
     ): Response<TripResponse>
 
     @GET("stop_finder")
     suspend fun findStops(
         @Header("Authorization") apiKey: String,
-        @Query("name_sf") searchTerm: String, // The user's typed text
-        @Query("type_sf") typeSf: String = "any", // [cite: 640] "any" allows searching all types
-        @Query("outputFormat") outputFormat: String = "rapidJSON", // [cite: 636]
-        @Query("coordOutputFormat") coordOutputFormat: String = "EPSG:4326", // [cite: 648]
-        @Query("TfNSWSF") tfNSWSF: String = "true", // [cite: 650] Recommended for website-like results
-        @Query("version") version: String = "10.2.1.42" // [cite: 652] As per Swagger default
+        @Query("name_sf") searchTerm: String,
+        @Query("type_sf") typeSf: String = "any",
+        @Query("outputFormat") outputFormat: String = "rapidJSON",
+        @Query("coordOutputFormat") coordOutputFormat: String = "EPSG:4326",
+        @Query("TfNSWSF") tfNSWSF: String = "true",
+        @Query("version") version: String = "10.2.1.42"
     ): Response<StopFinderResponse>
 }

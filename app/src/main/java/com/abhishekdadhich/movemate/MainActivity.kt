@@ -3,6 +3,7 @@ package com.abhishekdadhich.movemate
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -30,6 +31,7 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
+import com.google.gson.Gson // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING
 import kotlinx.coroutines.launch
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -83,6 +85,10 @@ class MainActivity : AppCompatActivity() {
     }
     private val displayTimeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
 
+    // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+    private var lastFetchedApiJourneys: List<Journey> = emptyList()
+    // END: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+
     private val requestLocationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
             if (isGranted) {
@@ -91,7 +97,7 @@ class MainActivity : AppCompatActivity() {
                 isUsingDeviceLocationForOrigin = true
             } else {
                 Log.d("TripPlannerApp", "Location permission denied by user.")
-                isUsingDeviceLocationForOrigin = false // Cannot use current location
+                isUsingDeviceLocationForOrigin = false
                 Toast.makeText(
                     this,
                     "Location permission denied. Please enter origin.",
@@ -105,8 +111,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         getUIControls()
-
-        initialiseRouteControls()
+        initialiseRouteControls() // This function will be modified below
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         checkAndRequestLocationPermission()
@@ -116,13 +121,46 @@ class MainActivity : AppCompatActivity() {
 
         autoCompleteTextViewTo.requestFocus()
 
-        // TODO: Check if this is needed - Delay showing keyboard slightly to ensure layout is settled
-//        Handler(Looper.getMainLooper()).postDelayed({
-//            val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-//            imm.showSoftInput(autoCompleteTextViewTo, InputMethodManager.SHOW_IMPLICIT)
-//        }, 200)
-
         setButtons()
+    }
+
+    private fun getUIControls() {
+        autoCompleteTextViewFrom = findViewById(R.id.autoCompleteTextViewFrom)
+        autoCompleteTextViewTo = findViewById(R.id.autoCompleteTextViewTo)
+        buttonFindRoutes = findViewById(R.id.buttonFindRoutes)
+        scrollViewAvailableRoutes = findViewById(R.id.scrollViewAvailableRoutes)
+        recyclerViewRoutes = findViewById(R.id.recyclerViewRoutes)
+    }
+
+    private fun initialiseRouteControls() {
+        // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+        // This is where RouteAdapter is initialized. We pass the click listener lambda.
+        routeAdapter = RouteAdapter(emptyList()) { clickedPosition ->
+            // This lambda will be called when an item in RouteAdapter is clicked
+            if (clickedPosition >= 0 && clickedPosition < lastFetchedApiJourneys.size) {
+                val selectedJourney = lastFetchedApiJourneys[clickedPosition]
+
+                Log.d("MainActivity", "Route card clicked at position: $clickedPosition. Launching details.")
+
+                val intent = Intent(this@MainActivity, TripDetailsActivity::class.java)
+                try {
+                    val journeyJson = Gson().toJson(selectedJourney)
+                    intent.putExtra("SELECTED_JOURNEY_JSON", journeyJson)
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Log.e("TripPlannerApp", "Error serializing Journey to JSON for TripDetails", e)
+                    Toast.makeText(this, "Error preparing trip details.", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Log.e("TripPlannerApp", "Clicked position $clickedPosition is out of bounds for lastFetchedApiJourneys size ${lastFetchedApiJourneys.size}")
+                Toast.makeText(this, "Could not load details for this route.", Toast.LENGTH_SHORT).show()
+            }
+        }
+        // END: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+
+        recyclerViewRoutes.layoutManager = LinearLayoutManager(this)
+        recyclerViewRoutes.adapter = routeAdapter
+        recyclerViewRoutes.isNestedScrollingEnabled = false
     }
 
     private fun setButtons() {
@@ -143,8 +181,10 @@ class MainActivity : AppCompatActivity() {
 
         // set the find routes button
         buttonFindRoutes.setOnClickListener {
+            // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING (Keyboard hide moved here from your file)
+            hideKeyboard()
+            // END: CHANGING FOR ROUTE OPTIONS CARD CLICKING
             lifecycleScope.launch {
-                hideKeyboard()
                 handleFindRoutesClick()
             }
         }
@@ -152,22 +192,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun hideKeyboard() {
         val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-        imm.hideSoftInputFromWindow(autoCompleteTextViewTo.windowToken, 0)
-    }
-
-    private fun initialiseRouteControls() {
-        routeAdapter = RouteAdapter(emptyList())
-        recyclerViewRoutes.layoutManager = LinearLayoutManager(this)
-        recyclerViewRoutes.adapter = routeAdapter
-        recyclerViewRoutes.isNestedScrollingEnabled = false
-    }
-
-    private fun getUIControls() {
-        autoCompleteTextViewFrom = findViewById(R.id.autoCompleteTextViewFrom)
-        autoCompleteTextViewTo = findViewById(R.id.autoCompleteTextViewTo)
-        buttonFindRoutes = findViewById(R.id.buttonFindRoutes)
-        scrollViewAvailableRoutes = findViewById(R.id.scrollViewAvailableRoutes)
-        recyclerViewRoutes = findViewById(R.id.recyclerViewRoutes)
+        // Using currentFocus is more reliable than a fixed view ID like autoCompleteTextViewTo.windowToken
+        var view = currentFocus
+        if (view == null) { // If no view has focus, create a new one to get a window token
+            view = View(this)
+        }
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
+        // Optionally clear focus from the text fields too
+        autoCompleteTextViewFrom.clearFocus()
+        autoCompleteTextViewTo.clearFocus()
+        findViewById<View>(R.id.main_activity_root_layout)?.requestFocus() // Request focus on root
     }
 
 
@@ -184,7 +218,7 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingPermission")
     private fun fetchCurrentLocationAndUpdateState() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Log.d("TripPlannerApp", "No permission to fetch current location. Trying last known.")
+            Log.d("TripPlannerApp", "No permission to fetch current location. Trying last known (which also needs permission).")
             isUsingDeviceLocationForOrigin = false
             fetchLastKnownLocationFallback()
             return
@@ -200,7 +234,6 @@ class MainActivity : AppCompatActivity() {
                     //  selectedOriginStopId = null
 
                     Log.i("TripPlannerApp", "Got location: Lat: $currentLatitude, Lon: $currentLongitude")
-                    Toast.makeText(this, "Got location: Lat: $currentLatitude, Lon: $currentLongitude", Toast.LENGTH_SHORT).show()
                 } else {
                     Log.w("TripPlannerApp", "getCurrentLocation returned null. Trying last known.")
                     fetchLastKnownLocationFallback()
@@ -286,7 +319,7 @@ class MainActivity : AppCompatActivity() {
                 selectedOriginStopId = null // Ensure ID is null
             }
             buttonFindRoutes.requestFocus() // Explicitly move focus to "Find Routes" button
-            isProcessingFromClick = false
+            resetProcessingFlags()
         }
     }
 
@@ -337,7 +370,7 @@ class MainActivity : AppCompatActivity() {
                 selectedDestinationStopId = null
             }
             buttonFindRoutes.requestFocus() // Explicitly move focus to "Find Routes" button
-            isProcessingToClick = false
+            resetProcessingFlags()
         }
     }
 
@@ -436,7 +469,7 @@ class MainActivity : AppCompatActivity() {
             }
             else {
                 // user has not typed anything, and the location coords are blank so can't proceed with API call
-                Log.i("TripPlannerApp", "User has not typed anything in 'To', and the location coords are blank so can't proceed with API call to find routes")
+                Log.i("TripPlannerApp", "User has not typed anything in 'From', and the location coords are blank so can't proceed with API call to find routes")
                 Toast.makeText(this, "Please type the starting point of trip (current location is not available)",  Toast.LENGTH_LONG).show()
                 autoCompleteTextViewFrom.requestFocus()
                 return // Stop API call
@@ -489,6 +522,11 @@ class MainActivity : AppCompatActivity() {
             if (response.isSuccessful) {
                 val tripResponse = response.body()
                 if (tripResponse != null && tripResponse.error == null && tripResponse.journeys != null) {
+
+                    // START: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+                    lastFetchedApiJourneys = tripResponse.journeys // Store the raw journeys
+                    // END: CHANGING FOR ROUTE OPTIONS CARD CLICKING
+
                     val appRoutes = mapApiJourneysToAppRoutes(tripResponse.journeys)
                     routeAdapter.updateRoutes(appRoutes)
                     if (appRoutes.isNotEmpty()) {
@@ -521,6 +559,20 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "Network error: Please check connection.", Toast.LENGTH_LONG)
                 .show()
         }
+
+        resetAllFlags()
+    }
+
+    private fun resetAllFlags() {
+        selectedOriginStopId = null
+        resetProcessingFlags()
+    }
+
+    private fun resetProcessingFlags() {
+        isProcessingFromClick = false
+        isProcessingToClick = false
+        isProgrammaticTextChangeTo = false
+        isProgrammaticTextChangeFrom = false
     }
 
     private fun getSelectedTime(): String {
@@ -556,8 +608,6 @@ class MainActivity : AppCompatActivity() {
         return dateForApi
     }
 
-    // ... (mapApiJourneysToAppRoutes, Date & Time Picker Functions, parse/format time helpers remain the same)
-    // Ensure mapApiJourneysToAppRoutes still has the corrected Metro/Coach name logic.
     private fun parseApiDateTimeStringToMillis(dateTimeString: String?): Long? {
         if (dateTimeString == null) return null
         return try {

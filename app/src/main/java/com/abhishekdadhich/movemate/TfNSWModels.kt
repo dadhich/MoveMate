@@ -2,7 +2,7 @@ package com.abhishekdadhich.movemate
 
 import com.google.gson.annotations.SerializedName
 
-// Main response structure for /trip endpoint
+// --- TripResponse and related models ---
 data class TripResponse(
     @SerializedName("journeys") val journeys: List<Journey>?,
     @SerializedName("error") val error: ApiError?
@@ -10,14 +10,17 @@ data class TripResponse(
 
 data class Journey(
     @SerializedName("legs") val legs: List<JourneyLeg>?
+    // You might also have interchanges: Int? here if needed from your Logcat
 )
 
 data class JourneyLeg(
     @SerializedName("origin") val origin: LegStop?,
     @SerializedName("destination") val destination: LegStop?,
     @SerializedName("transportation") val transportation: Transportation?,
-    @SerializedName("duration") val duration: Int?,
-    @SerializedName("infos") val infos: List<LegStopInfo>?
+    @SerializedName("duration") val duration: Int?, // Duration in seconds
+    @SerializedName("infos") val infos: List<LegStopInfo>?,
+    @SerializedName("stopSequence") val stopSequence: List<LegStop>? // ADDED THIS FIELD
+    // Add other leg details like coords, footPathInfo, etc. as needed from Swagger
 )
 
 data class LegStop(
@@ -27,7 +30,10 @@ data class LegStop(
     @SerializedName("departureTimePlanned") val departureTimePlanned: String?,
     @SerializedName("arrivalTimePlanned") val arrivalTimePlanned: String?,
     @SerializedName("departureTimeEstimated") val departureTimeEstimated: String?,
-    @SerializedName("arrivalTimeEstimated") val arrivalTimeEstimated: String?
+    @SerializedName("arrivalTimeEstimated") val arrivalTimeEstimated: String?,
+    @SerializedName("type") val type: String?, // e.g., "platform", "stop"
+    @SerializedName("parent") val parent: ParentLocation? // Added for completeness
+    // Add other LegStop properties like properties.WheelchairAccess if needed
 )
 
 data class Transportation(
@@ -37,11 +43,12 @@ data class Transportation(
     @SerializedName("product") val product: Product?,
     @SerializedName("operator") val operator: Operator?,
     @SerializedName("destination") val transportDestination: TransportDestination?
+    // Add properties like RealtimeTripId if needed
 )
 
 data class Product(
-    @SerializedName("name") val name: String?,
-    @SerializedName("class") val classId: Int?
+    @SerializedName("name") val name: String?, // e.g., "Train", "Bus"
+    @SerializedName("class") val classId: Int? // e.g., 1=Train, 5=Bus
 )
 
 data class Operator(
@@ -64,33 +71,51 @@ data class ApiError(
     @SerializedName("message") val message: String?
 )
 
+// --- StopFinder API response models ---
 data class StopFinderResponse(
     @SerializedName("version") val version: String?,
-    @SerializedName("error") val error: ApiError?, // Reusing ApiError from TripResponse
+    @SerializedName("error") val error: ApiError?,
     @SerializedName("locations") val locations: List<StopFinderLocation>?
 )
 
 data class StopFinderLocation(
-    @SerializedName("id") val id: String?, // Crucial for using as origin/destination ID
+    @SerializedName("id") val id: String?,
     @SerializedName("isGlobalId") val isGlobalId: Boolean?,
-    @SerializedName("name") val name: String?, // Long name, may include suburb
-    @SerializedName("disassembledName") val disassembledName: String?, // Short name
-    @SerializedName("type") val type: String?, // e.g., "stop", "platform", "locality", "poi"
-    @SerializedName("coord") val coordinates: List<Double>?, // [latitude, longitude] or [longitude, latitude] - API doc says first is lat, then lon for /coord, for /stop_finder this needs checking from response
+    @SerializedName("name") val name: String?,
+    @SerializedName("disassembledName") val disassembledName: String?,
+    @SerializedName("type") val type: String?,
+    @SerializedName("coord") val coordinates: List<Double>?,
     @SerializedName("matchQuality") val matchQuality: Int?,
     @SerializedName("isBest") val isBest: Boolean?,
-    @SerializedName("parent") val parent: ParentLocation?, // Parent location details
-    @SerializedName("modes") val modes: List<Int>? // List of transport mode codes servicing this stop
+    @SerializedName("parent") val parent: ParentLocation?,
+    @SerializedName("modes") val modes: List<Int>?
 )
 
-// ParentLocation can be reused or redefined if StopFinder's parent is different
-// From the Swagger, ParentLocation seems generic. Let's assume it's simple for now.
-// If it's the same as used in TripRequestResponseJourneyLegStop, we can reuse that definition.
-// The Swagger provided shows ParentLocation definition once.
 data class ParentLocation(
     @SerializedName("id") val id: String?,
     @SerializedName("name") val name: String?,
     @SerializedName("disassembledName") val disassembledName: String?,
     @SerializedName("type") val type: String?
-    // It can also have a nested parent, but we'll keep it simple for now
+)
+
+// --- App-specific Route model (used by RouteAdapter on MainActivity) ---
+enum class RouteStatusType {
+    ON_TIME, DELAYED, EARLY
+}
+
+data class TransportTag(
+    val iconResId: Int,
+    val text: String
+)
+
+data class Route(
+    val id: String,
+    val routeName: String,
+    val firstVehicleActualDepartureUTC: Long?,
+    val firstVehicleScheduledDepartureUTC: Long?,
+    val firstVehicleEstimatedDepartureUTC: Long?,
+    val overallJourneyETAForDisplay: String,
+    val overallJourneyDepartureTimeForDisplay: String,
+    val transfersCount: Int,
+    val transportTags: List<TransportTag>
 )
